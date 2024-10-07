@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		93D842642CB3838800CB2DEC /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D842632CB3838800CB2DEC /* Package.swift */; };
+		93D842652CB3838800CB2DEC /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D842632CB3838800CB2DEC /* Package.swift */; };
+		93D842662CB3838800CB2DEC /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D842632CB3838800CB2DEC /* Package.swift */; };
+		93D8426B2CB386BE00CB2DEC /* Kanna in Frameworks */ = {isa = PBXBuildFile; productRef = 93D8426A2CB386BE00CB2DEC /* Kanna */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		93D8423D2CB362BF00CB2DEC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +34,7 @@
 		93D842272CB362BC00CB2DEC /* WikiStats.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WikiStats.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		93D8423C2CB362BF00CB2DEC /* WikiStatsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WikiStatsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93D842462CB362BF00CB2DEC /* WikiStatsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WikiStatsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		93D842632CB3838800CB2DEC /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -52,6 +60,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93D8426B2CB386BE00CB2DEC /* Kanna in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,6 +84,7 @@
 		93D8421E2CB362BC00CB2DEC = {
 			isa = PBXGroup;
 			children = (
+				93D842632CB3838800CB2DEC /* Package.swift */,
 				93D842292CB362BC00CB2DEC /* WikiStats */,
 				93D8423F2CB362BF00CB2DEC /* WikiStatsTests */,
 				93D842492CB362BF00CB2DEC /* WikiStatsUITests */,
@@ -112,6 +122,7 @@
 			);
 			name = WikiStats;
 			packageProductDependencies = (
+				93D8426A2CB386BE00CB2DEC /* Kanna */,
 			);
 			productName = WikiStats;
 			productReference = 93D842272CB362BC00CB2DEC /* WikiStats.app */;
@@ -195,6 +206,10 @@
 			);
 			mainGroup = 93D8421E2CB362BC00CB2DEC;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				93D842592CB36C9000CB2DEC /* XCRemoteSwiftPackageReference "SwiftSoup" */,
+				93D842692CB386BE00CB2DEC /* XCRemoteSwiftPackageReference "Kanna" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 93D842282CB362BC00CB2DEC /* Products */;
 			projectDirPath = "";
@@ -236,6 +251,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93D842652CB3838800CB2DEC /* Package.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -243,6 +259,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93D842642CB3838800CB2DEC /* Package.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -250,6 +267,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93D842662CB3838800CB2DEC /* Package.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -552,6 +570,33 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		93D842592CB36C9000CB2DEC /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.5;
+			};
+		};
+		93D842692CB386BE00CB2DEC /* XCRemoteSwiftPackageReference "Kanna" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/tid-kijyun/Kanna.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		93D8426A2CB386BE00CB2DEC /* Kanna */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 93D842692CB386BE00CB2DEC /* XCRemoteSwiftPackageReference "Kanna" */;
+			productName = Kanna;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 93D8421F2CB362BC00CB2DEC /* Project object */;
 }
