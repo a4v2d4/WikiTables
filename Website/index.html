@@ -1,65 +1,417 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WikiStats</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        input, button { font-size: 16px; padding: 5px; }
-        #results { margin-top: 20px; }
-        .player { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; cursor: pointer; }
-        .player:hover { background-color: #f0f0f0; }
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f2f2f2;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: var(--text-color);
+        }
+
+        input,
+        button {
+            font-size: 16px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #3a7bc8;
+        }
+
+        #results,
+        #statsResult {
+            margin-top: 20px;
+        }
+
+        .player {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .player:hover {
+            background-color: var(--secondary-color);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--secondary-color);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            input,
+            button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <h1>WikiStats</h1>
-    <input type="text" id="searchInput" placeholder="Enter player name">
-    <button id="searchButton" onclick="searchPlayers()">Search</button>
-    <div id="results"></div>
+    <div id="landing_page_div">
+        <h1>WikiStats</h1>
+        <input type="text" id="searchInput" placeholder="Enter player name" aria-label="Search for a player">
+        <button id="searchButton" onclick="searchPlayers()">Search</button>
+        <div id="loading" class="loading" aria-live="polite">Loading...</div>
+        <div id="error" class="error" aria-live="assertive"></div>
+        <div id="results" role="list"></div>
+    </div>
+
+    <div id="statsResult"></div>
 
     <script>
-    let players = [];
+        let players = [];
+        const searchPageDiv = document.getElementById('landing_page_div');
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const loadingDiv = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const resultsDiv = document.getElementById('results');
+        const statsResultDiv = document.getElementById('statsResult');
 
-    function searchPlayers() {
-        const searchText = document.getElementById('searchInput').value;
-        const urlString = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(searchText)}&limit=10&namespace=0&format=json&origin=*`;
 
-        fetch(urlString)
-            .then(response => response.json())
-            .then(jsonArray => {
+
+        async function fetchWikipediaPage(title) {
+            console.log("fetchWikipediaPage title:", title);
+
+            // Extract the page title from the URL if a full URL is provided
+            if (title.startsWith('https://en.wikipedia.org/wiki/')) {
+                title = title.split('/').pop();
+            }
+
+            // Encode the title for use in the URL
+            const encodedTitle = encodeURIComponent(title);
+
+            // Construct the Wikipedia API URL
+            const apiUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodedTitle}&format=json&origin=*`;
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(`Wikipedia API error: ${data.error.info}`);
+                }
+                return data.parse.text['*'];
+            } catch (error) {
+                console.error('Error fetching Wikipedia page:', error.message);
+                throw error;
+            }
+        }
+
+        function removeEditSpans(element) {
+            const editSpans = element.querySelectorAll('span');
+            editSpans.forEach(span => {
+                if (/edit/i.test(span.textContent)) {
+                    span.remove();
+                }
+            });
+        }
+
+        function extractCareerStatistics(htmlContent) {
+            console.log('Entering extractCareerStatistics function');
+            console.log('HTML content length:', htmlContent.length);
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            console.log('Parsed document:', doc);
+
+            // Find the career statistics heading
+            const headingElement = Array.from(doc.querySelectorAll('h2')).find(h2 =>
+                /areer.*tatistics/.test(h2.textContent)
+            );
+            console.log('Heading element found:', headingElement);
+
+            if (!headingElement) {
+                console.log('No career statistics heading found, returning null');
+                return { prostats_heading: null, prostats_divs: [] };
+            }
+
+            let headingDiv = headingElement.closest('div');
+            console.log('Original heading div:', headingDiv);
+
+            if (!headingDiv) {
+                console.log('No parent div for heading found, returning null');
+                return { prostats_heading: null, prostats_divs: [] };
+            }
+
+            // Remove edit spans from the heading div
+            removeEditSpans(headingDiv);
+
+            const contentDivs = [];
+            let currentElement = headingDiv.nextElementSibling;
+
+            while (currentElement && !currentElement.querySelector('h2')) {
+                console.log('Current element:', currentElement);
+                // Remove edit spans from the current element
+                removeEditSpans(currentElement);
+                contentDivs.push(currentElement.outerHTML);
+                currentElement = currentElement.nextElementSibling;
+            }
+
+            console.log(`Number of content divs found: ${contentDivs.length}`);
+
+            const result = {
+                prostats_heading: headingDiv.outerHTML,
+                prostats_divs: contentDivs
+            };
+            console.log('Returning result:', result);
+
+            return result;
+        }
+
+        function extractCollegeStatistics(htmlContent) {
+            console.log('Entering extractCollegeStatistics function');
+            console.log('HTML content length:', htmlContent.length);
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            console.log('Parsed document:', doc);
+
+            const headingElement = doc.querySelector('h3#College_statistics, h2#College_statistics');
+            console.log('Heading element found:', headingElement);
+
+            if (!headingElement) {
+                console.log('No heading element found, returning null');
+                return { collegestats_heading: null, collegestats_tables: [] };
+            }
+
+            let headingDiv = headingElement.closest('div');
+            console.log('Heading div:', headingDiv);
+
+            if (!headingDiv) {
+                console.log('No parent div for heading found, returning null');
+                return { collegestats_heading: null, collegestats_tables: [] };
+            }
+
+            // Remove edit spans from the heading div
+            removeEditSpans(headingDiv);
+
+            const tables = [];
+            let currentElement = headingDiv.nextElementSibling;
+            console.log('Initial next element:', currentElement);
+
+            while (currentElement && tables.length < 2) {
+                console.log('Current element:', currentElement);
+
+                if (currentElement.tagName === 'TABLE') {
+                    // Remove edit spans from the table
+                    removeEditSpans(currentElement);
+                    tables.push(currentElement.outerHTML);
+                    console.log(`Table ${tables.length} found:`, currentElement);
+                } else {
+                    // If we encounter a non-table element, stop searching
+                    break;
+                }
+
+                currentElement = currentElement.nextElementSibling;
+            }
+
+            console.log(`Number of tables found: ${tables.length}`);
+
+            const result = {
+                collegestats_heading: headingDiv.outerHTML,
+                collegestats_tables: tables
+            };
+            console.log('Returning result:', result);
+
+            return result;
+        }
+        
+        async function scrapeCollegeStatistics(url) {
+            console.log('Entering scrapeCollegeStatistics function');
+            console.log('URL:', url);
+
+            try {
+                console.log('Showing loading indicator');
+                showLoading(true);
+
+                console.log('Fetching Wikipedia page');
+                const htmlContent = await fetchWikipediaPage(url);
+                console.log('Wikipedia page fetched, content length:', htmlContent.length);
+
+                console.log('Extracting college statistics');
+                const { collegestats_heading, collegestats_tables } = extractCollegeStatistics(htmlContent);
+                const { prostats_heading, prostats_divs } = extractCareerStatistics(htmlContent);
+                console.log('Extraction complete. Heading:', collegestats_heading ? 'Found' : 'Not found', 'Tables:', collegestats_tables.length);
+
+                if (!collegestats_heading || collegestats_tables.length === 0) {
+                    console.log('No college statistics found');
+                    throw new Error('College statistics not found on this page');
+                }
+
+                console.log('Returning scraped data');
+                return { collegestats_heading, collegestats_tables, prostats_heading, prostats_divs };
+            } catch (error) {
+                console.error('Error in scrapeCollegeStatistics:', error.message);
+                showError(error.message);
+                return null;
+            } finally {
+                console.log('Hiding loading indicator');
+                showLoading(false);
+            }
+        }
+
+        async function searchPlayers() {
+            const searchText = searchInput.value.trim();
+            if (!searchText) {
+                showError('Please enter a player name');
+                return;
+            }
+
+            const urlString = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(searchText)}&limit=10&namespace=0&format=json&origin=*`;
+
+            try {
+                showLoading(true);
+                const response = await fetch(urlString);
+                const jsonArray = await response.json();
+
                 if (Array.isArray(jsonArray) && jsonArray.length > 3) {
                     const names = jsonArray[1];
                     const urls = jsonArray[3];
                     if (Array.isArray(names) && Array.isArray(urls) && names.length === urls.length) {
                         players = names.map((name, index) => ({ name, url: urls[index] }));
                         displayResults();
+                    } else {
+                        throw new Error('Invalid response format');
                     }
+                } else {
+                    throw new Error('No results found');
                 }
-            })
-            .catch(error => console.error('Error:', error));
-    }
-
-    function displayResults() {
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = players.map(player => `
-            <div class="player" onclick="openWikipediaPage('${player.url}')">
-                <h2>${player.name}</h2>
-            </div>
-        `).join('');
-    }
-
-    function openWikipediaPage(url) {
-        window.open(url, '_blank');
-    }
-
-    // Add event listener for the Enter key
-    document.getElementById('searchInput').addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault(); // Prevent the default action
-            document.getElementById('searchButton').click(); // Trigger the search button click
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
         }
-    });
+
+        function displayResults() {
+            resultsDiv.innerHTML = players.map(player => `
+                <div class="player" onclick="showWikipediaPageStats('${player.url}')" role="listitem">
+                    <h2>${player.name}</h2>
+                </div>
+            `).join('');
+        }
+
+        function clearSearchScreen() {
+            resultsDiv.innerHTML = '';
+            searchInput.textContent = '';
+            searchPageDiv.setAttribute('visible', 0);
+        }
+
+        async function showWikipediaPageStats(url) {
+            console.log('Entering showWikipediaPageStats function');
+            console.log('URL:', url);
+
+            try {
+                console.log('Showing loading indicator');
+                showLoading(true);
+
+                console.log('Calling scrapeCollegeStatistics');
+                const stats = await scrapeCollegeStatistics(url);
+                console.log('Received stats:', stats);
+
+                if (stats) {
+                    console.log('Stats found, updating statsResultDiv');
+                    statsResultDiv.innerHTML = `${stats.collegestats_heading}${stats.collegestats_tables.join('')}${stats.prostats_heading}${stats.prostats_divs.join('')}`;
+                    clearSearchScreen();
+                    console.log('statsResultDiv updated');
+                } else {
+                    console.log('No stats found');
+                }
+            } catch (error) {
+                console.error('Error in showWikipediaPageStats:', error);
+                showError(error.message);
+            } finally {
+                console.log('Hiding loading indicator');
+                showLoading(false);
+            }
+
+            console.log('Exiting showWikipediaPageStats function');
+        }
+
+        function showLoading(isLoading) {
+            loadingDiv.style.display = isLoading ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            setTimeout(() => {
+                errorDiv.textContent = '';
+            }, 5000);
+        }
+
+        // Debounce function
+        function debounce(func, delay) {
+            let timeoutId;
+            return function (...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        // Add event listeners
+        searchInput.addEventListener('input', debounce(searchPlayers, 300));
+        searchInput.addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                searchButton.click();
+            }
+        });
     </script>
 </body>
+
 </html>
