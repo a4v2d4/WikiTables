@@ -109,7 +109,14 @@
         <div id="results" role="list"></div>
     </div>
 
-    <div id="statsResult"></div>
+    <div style="display: flex; width: 100%; height: 100%; gap: 20px;">
+        <div id="infoTable" style="flex: 1; max-width: calc(50% - 10px); height: 100%;">
+            <!-- Content for infocard div -->
+        </div>
+        <div id="tables" style="flex: 1; display: flex; flex-wrap: wrap; align-content: flex-start;">
+            <!-- Content for rest of the tables div -->
+        </div>
+    </div>
 
     <script>
         let players = [];
@@ -119,7 +126,10 @@
         const loadingDiv = document.getElementById('loading');
         const errorDiv = document.getElementById('error');
         const resultsDiv = document.getElementById('results');
-        const statsResultDiv = document.getElementById('statsResult');
+
+        const infoCardResultDiv = document.getElementById('infoTable');
+        const tableResultsDiv = document.getElementById('tables');
+
 
         async function fetchWikipediaPage(title) {
             console.log("fetchWikipediaPage title:", title);
@@ -171,7 +181,7 @@
             console.log('Found infocard table:', infocardTable);
 
             const result = [];
-            <!-- result.push(infocardTable.outerHTML); -->
+            result.push(infocardTable.outerHTML);
 
             const tables = Array.from(doc.querySelectorAll('.wikitable'));
             console.log('Found tables:', tables);
@@ -197,7 +207,7 @@
             console.log('Result array:', result);
             return result;
         }
-        
+
         async function scrapeSportsStatistics(url) {
             console.log('Entering scrapeSportsStatistics function');
             console.log('URL:', url);
@@ -290,7 +300,8 @@
 
                 if (tables) {
                     console.log('Stats found, updating statsResultDiv');
-                    statsResultDiv.innerHTML = `${tables.join('')}`;
+                    infoCardResultDiv.innerHTML = `${tables[0]}`;
+                    tableResultsDiv.innerHTML = `${tables.slice(1).join('')}`;
                     clearSearchScreen();
                     console.log('statsResultDiv updated');
                 } else {
