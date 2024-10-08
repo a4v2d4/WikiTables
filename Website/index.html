@@ -18,7 +18,8 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f0f0e1; /* Lighter background than Wikipedia */
+            background-color: #f0f0e1;
+            /* Lighter background than Wikipedia */
             color: var(--text-color);
         }
 
@@ -159,114 +160,41 @@
             });
         }
 
-        function extractCareerStatistics(htmlContent) {
-            console.log('Entering extractCareerStatistics function');
-            console.log('HTML content length:', htmlContent.length);
-
+        function extractTablesAndDivs(htmlContent) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlContent, 'text/html');
             console.log('Parsed document:', doc);
 
-            // Find the career statistics heading
-            const headingElement = Array.from(doc.querySelectorAll('h2')).find(h2 =>
-                /areer.*tatistics/.test(h2.textContent)
-            );
-            console.log('Heading element found:', headingElement);
+            // Find the info card table
+            const infocardTables = Array.from(doc.querySelectorAll('.infobox.vcard'));
+            const infocardTable = infocardTables[0];
+            console.log('Found infocard table:', infocardTable);
 
-            if (!headingElement) {
-                console.log('No career statistics heading found, returning null');
-                return { prostats_heading: null, prostats_divs: [] };
-            }
+            const result = [];
+            <!-- result.push(infocardTable.outerHTML); -->
 
-            let headingDiv = headingElement.closest('div');
-            console.log('Original heading div:', headingDiv);
+            const tables = Array.from(doc.querySelectorAll('.wikitable'));
+            console.log('Found tables:', tables);
 
-            if (!headingDiv) {
-                console.log('No parent div for heading found, returning null');
-                return { prostats_heading: null, prostats_divs: [] };
-            }
 
-            // Remove edit spans from the heading div
-            removeEditSpans(headingDiv);
+            tables.forEach(table => {
+                let currentNode = table.previousElementSibling;
+                const precedingDivs = [];
 
-            const contentDivs = [];
-            let currentElement = headingDiv.nextElementSibling;
-
-            while (currentElement && !currentElement.querySelector('h2')) {
-                console.log('Current element:', currentElement);
-                // Remove edit spans from the current element
-                removeEditSpans(currentElement);
-                contentDivs.push(currentElement.outerHTML);
-                currentElement = currentElement.nextElementSibling;
-            }
-
-            console.log(`Number of content divs found: ${contentDivs.length}`);
-
-            const result = {
-                prostats_heading: headingDiv.outerHTML,
-                prostats_divs: contentDivs
-            };
-            console.log('Returning result:', result);
-
-            return result;
-        }
-
-        function extractCollegeStatistics(htmlContent) {
-            console.log('Entering extractCollegeStatistics function');
-            console.log('HTML content length:', htmlContent.length);
-
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlContent, 'text/html');
-            console.log('Parsed document:', doc);
-
-            const headingElement = Array.from(doc.querySelectorAll('h2, h3')).find(h2 =>
-                /tatistics/.test(h2.textContent)
-            );            console.log('Heading element found:', headingElement);
-
-            if (!headingElement) {
-                console.log('No heading element found, returning null');
-                return { collegestats_heading: null, collegestats_tables: [] };
-            }
-
-            let headingDiv = headingElement.closest('div');
-            console.log('Heading div:', headingDiv);
-
-            if (!headingDiv) {
-                console.log('No parent div for heading found, returning null');
-                return { collegestats_heading: null, collegestats_tables: [] };
-            }
-
-            // Remove edit spans from the heading div
-            removeEditSpans(headingDiv);
-
-            const tables = [];
-            let currentElement = headingDiv.nextElementSibling;
-            console.log('Initial next element:', currentElement);
-
-            while (currentElement && tables.length < 2) {
-                console.log('Current element:', currentElement);
-
-                if (currentElement.tagName === 'TABLE') {
-                    // Remove edit spans from the table
-                    removeEditSpans(currentElement);
-                    tables.push(currentElement.outerHTML);
-                    console.log(`Table ${tables.length} found:`, currentElement);
-                } else {
-                    // If we encounter a non-table element, stop searching
-                    break;
+                while (currentNode && currentNode.tagName.toLowerCase() === 'div') {
+                    removeEditSpans(currentNode)
+                    precedingDivs.unshift(currentNode.outerHTML); // Add to the beginning of the array
+                    currentNode = currentNode.previousElementSibling;
                 }
 
-                currentElement = currentElement.nextElementSibling;
-            }
+                // Add the preceding divs to the result array
+                result.push(...precedingDivs);
 
-            console.log(`Number of tables found: ${tables.length}`);
+                // Add the table to the result array
+                result.push(table.outerHTML);
+            });
 
-            const result = {
-                collegestats_heading: headingDiv.outerHTML,
-                collegestats_tables: tables
-            };
-            console.log('Returning result:', result);
-
+            console.log('Result array:', result);
             return result;
         }
         
@@ -283,24 +211,15 @@
                 console.log('Wikipedia page fetched, content length:', htmlContent.length);
 
                 console.log('Extracting college statistics');
-                let { collegestats_heading, collegestats_tables } = extractCollegeStatistics(htmlContent);
-                let { prostats_heading, prostats_divs } = extractCareerStatistics(htmlContent);
-                console.log('Extraction complete. Heading:', collegestats_heading ? 'Found' : 'Not found', 'Tables:', collegestats_tables.length);
+                let tables = extractTablesAndDivs(htmlContent);
 
-                if ((!collegestats_heading || collegestats_tables.length === 0) && (!prostats_heading || prostats_divs.length === 0)) {
-                    console.log('No sports statistics found');
-                    throw new Error('No college nor pro career statistics not found on this page');
-                } else {
-                    if (!collegestats_heading){
-                        collegestats_heading = "";
-                    } 
-                    if (!prostats_heading) {
-                        prostats_heading = "";
-                    }
+                if (!tables.length === 0) {
+                    console.log('No tables found');
+                    throw new Error('No tables found on this page');
                 }
 
                 console.log('Returning scraped data');
-                return { collegestats_heading, collegestats_tables, prostats_heading, prostats_divs };
+                return tables;
             } catch (error) {
                 console.error('Error in scrapeSportsStatistics:', error.message);
                 showError(error.message);
@@ -366,12 +285,12 @@
                 showLoading(true);
 
                 console.log('Calling scrapeSportsStatistics');
-                const stats = await scrapeSportsStatistics(url);
-                console.log('Received stats:', stats);
+                const tables = await scrapeSportsStatistics(url);
+                console.log('Received tables:', tables);
 
-                if (stats) {
+                if (tables) {
                     console.log('Stats found, updating statsResultDiv');
-                    statsResultDiv.innerHTML = `${stats.collegestats_heading}${stats.collegestats_tables.join('')}${stats.prostats_heading}${stats.prostats_divs.join('')}`;
+                    statsResultDiv.innerHTML = `${tables.join('')}`;
                     clearSearchScreen();
                     console.log('statsResultDiv updated');
                 } else {
