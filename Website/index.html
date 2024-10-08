@@ -120,8 +120,6 @@
         const resultsDiv = document.getElementById('results');
         const statsResultDiv = document.getElementById('statsResult');
 
-
-
         async function fetchWikipediaPage(title) {
             console.log("fetchWikipediaPage title:", title);
 
@@ -221,8 +219,9 @@
             const doc = parser.parseFromString(htmlContent, 'text/html');
             console.log('Parsed document:', doc);
 
-            const headingElement = doc.querySelector('h3#College_statistics, h2#College_statistics');
-            console.log('Heading element found:', headingElement);
+            const headingElement = Array.from(doc.querySelectorAll('h2, h3')).find(h2 =>
+                /tatistics/.test(h2.textContent)
+            );            console.log('Heading element found:', headingElement);
 
             if (!headingElement) {
                 console.log('No heading element found, returning null');
@@ -271,8 +270,8 @@
             return result;
         }
         
-        async function scrapeCollegeStatistics(url) {
-            console.log('Entering scrapeCollegeStatistics function');
+        async function scrapeSportsStatistics(url) {
+            console.log('Entering scrapeSportsStatistics function');
             console.log('URL:', url);
 
             try {
@@ -284,19 +283,26 @@
                 console.log('Wikipedia page fetched, content length:', htmlContent.length);
 
                 console.log('Extracting college statistics');
-                const { collegestats_heading, collegestats_tables } = extractCollegeStatistics(htmlContent);
-                const { prostats_heading, prostats_divs } = extractCareerStatistics(htmlContent);
+                let { collegestats_heading, collegestats_tables } = extractCollegeStatistics(htmlContent);
+                let { prostats_heading, prostats_divs } = extractCareerStatistics(htmlContent);
                 console.log('Extraction complete. Heading:', collegestats_heading ? 'Found' : 'Not found', 'Tables:', collegestats_tables.length);
 
-                if (!collegestats_heading || collegestats_tables.length === 0) {
-                    console.log('No college statistics found');
-                    throw new Error('College statistics not found on this page');
+                if ((!collegestats_heading || collegestats_tables.length === 0) && (!prostats_heading || prostats_divs.length === 0)) {
+                    console.log('No sports statistics found');
+                    throw new Error('No college nor pro career statistics not found on this page');
+                } else {
+                    if (!collegestats_heading){
+                        collegestats_heading = "";
+                    } 
+                    if (!prostats_heading) {
+                        prostats_heading = "";
+                    }
                 }
 
                 console.log('Returning scraped data');
                 return { collegestats_heading, collegestats_tables, prostats_heading, prostats_divs };
             } catch (error) {
-                console.error('Error in scrapeCollegeStatistics:', error.message);
+                console.error('Error in scrapeSportsStatistics:', error.message);
                 showError(error.message);
                 return null;
             } finally {
@@ -359,8 +365,8 @@
                 console.log('Showing loading indicator');
                 showLoading(true);
 
-                console.log('Calling scrapeCollegeStatistics');
-                const stats = await scrapeCollegeStatistics(url);
+                console.log('Calling scrapeSportsStatistics');
+                const stats = await scrapeSportsStatistics(url);
                 console.log('Received stats:', stats);
 
                 if (stats) {
