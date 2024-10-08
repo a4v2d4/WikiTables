@@ -1,10 +1,16 @@
 ## TODO
-- make autocomplete top match show in search bar highlighted like google [ ]
+### performance
 - cache results [ ]
+  
+### code cleanliness
 - rename all things statistics to just generalized tables [ ]
+
+### UI colors
+- make autocomplete top match show in search bar highlighted like google [ ]
 - make dark mode [ ]
 
 ## DONE
+- make top match auto highlighted [X]
 - make autocomplete work on enter [X]
 - deploy [X]
 - iPhone rendering [X]

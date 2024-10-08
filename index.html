@@ -114,6 +114,10 @@
             text-decoration: underline;
         }
 
+        .player.selected {
+            background-color: #e0e0e0;
+        }
+
         /* Mobile-specific styles */
         @media (max-width: 767px) {
             body {
@@ -180,6 +184,8 @@
 
     <script>
         let players = [];
+        let selectedPlayerIndex = -1;
+
         const searchPageDiv = document.getElementById('landing_page_div');
         const searchInput = document.getElementById('searchInput');
         const searchButton = document.getElementById('searchButton');
@@ -189,7 +195,7 @@
 
         const infoCardResultDiv = document.getElementById('infoTable');
         const tableResultsDiv = document.getElementById('tables');
-        
+
         async function fetchWikipediaPage(e) {
             if (e.startsWith('https://en.wikipedia.org/wiki/')) {
                 e = e.split('/').pop();
@@ -205,7 +211,7 @@
                 throw e;
             }
         }
-        
+
         function removeEditSpans(element) {
             const editSpans = element.querySelectorAll('span');
             editSpans.forEach(span => {
@@ -214,55 +220,55 @@
                 }
             });
         }
-        
+
         function extractTablesAndDivs(htmlContent) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlContent, 'text/html');
-        
+
             // Remove all elements with class "mw-empty-elt"
             doc.querySelectorAll('.mw-empty-elt').forEach(el => el.remove());
-        
+
             // Find the info card table
             const infocardTables = Array.from(doc.querySelectorAll('.infobox.vcard'));
             const infocardTable = infocardTables[0];
-        
+
             const result = [];
             if (infocardTable) {
                 result.push(infocardTable.outerHTML);
             }
-        
+
             const tables = Array.from(doc.querySelectorAll('.wikitable'));
-        
+
             tables.forEach(table => {
                 let currentNode = table.previousElementSibling;
                 const precedingDivs = [];
-        
+
                 while (currentNode && currentNode.tagName.toLowerCase() === 'div') {
                     removeEditSpans(currentNode);
                     precedingDivs.unshift(currentNode.outerHTML);
                     currentNode = currentNode.previousElementSibling;
                 }
-        
+
                 // Add the preceding divs to the result array
                 result.push(...precedingDivs);
-        
+
                 // Add the table to the result array
                 result.push(table.outerHTML);
             });
-        
+
             return result;
         }
-        
+
         async function scrapeSportsStatistics(url) {
             try {
                 showLoading(true);
                 const htmlContent = await fetchWikipediaPage(url);
                 let tables = extractTablesAndDivs(htmlContent);
-        
+
                 if (tables.length === 0) {
                     throw new Error('No tables found on this page');
                 }
-        
+
                 return tables;
             } catch (error) {
                 showError(error.message);
@@ -271,8 +277,59 @@
                 showLoading(false);
             }
         }
+
+        function clearSearchScreen() {
+            resultsDiv.innerHTML = '';
+        }
+
+        async function showWikipediaPageStats(e) {
+            try {
+                showLoading(true);
+                const t = await scrapeSportsStatistics(e);
+                if (t) {
+                    infoCardResultDiv.innerHTML = modifyLinks(t[0]);
+                    tableResultsDiv.innerHTML = modifyLinks(t.slice(1).join(''));
+                    clearSearchScreen();
+                }
+            } catch (e) {
+                showError(e.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function modifyLinks(e) {
+            const t = (new DOMParser).parseFromString(e, 'text/html');
+            t.querySelectorAll('a').forEach(e => {
+                const t = e.getAttribute('href');
+                if (t && t.startsWith('/wiki/')) {
+                    e.setAttribute('href', `https://en.wikipedia.org${t}`);
+                    e.setAttribute('target', '_blank');
+                }
+            });
+            return t.body.innerHTML;
+        }
+
+        function showLoading(e) {
+            loadingDiv.style.display = e ? 'block' : 'none';
+        }
+
+        function showError(e) {
+            errorDiv.textContent = e;
+            setTimeout(() => {
+                errorDiv.textContent = '';
+            }, 5e3);
+        }
+
+        function debounce(e, t) {
+            let r;
+            return function (...n) {
+                clearTimeout(r);
+                r = setTimeout(() => e.apply(this, n), t);
+            }
+        }
         
-        async function searchPlayers(do_launch=false) {
+        async function searchPlayers() {
             const searchText = searchInput.value.trim();
             if (!searchText) {
                 showError('Please enter a player name');
@@ -292,9 +349,9 @@
                     if (Array.isArray(names) && Array.isArray(urls) && names.length === urls.length) {
                         players = names.map((name, index) => ({ name, url: urls[index] }));
                         displayResults();
-                        // Automatically "click" on the top result
-                        if (players.length > 0 && do_launch == true) {
-                            showWikipediaPageStats(players[0].url);
+                        if (players.length > 0) {
+                            highlightTopResult(players[0].name);
+                            selectedPlayerIndex = 0;
                         }
                     } else {
                         throw new Error('Invalid response format');
@@ -318,72 +375,62 @@
             `).join('');
         }
         
-        function clearSearchScreen() {
-            resultsDiv.innerHTML = '';
-        }
-        
-        async function showWikipediaPageStats(e) {
-            try {
-                showLoading(true);
-                const t = await scrapeSportsStatistics(e);
-                if (t) {
-                    infoCardResultDiv.innerHTML = modifyLinks(t[0]);
-                    tableResultsDiv.innerHTML = modifyLinks(t.slice(1).join(''));
-                    clearSearchScreen();
-                }
-            } catch (e) {
-                showError(e.message);
-            } finally {
-                showLoading(false);
-            }
-        }
-        
-        function modifyLinks(e) {
-            const t = (new DOMParser).parseFromString(e, 'text/html');
-            t.querySelectorAll('a').forEach(e => {
-                const t = e.getAttribute('href');
-                if (t && t.startsWith('/wiki/')) {
-                    e.setAttribute('href', `https://en.wikipedia.org${t}`);
-                    e.setAttribute('target', '_blank');
-                }
-            });
-            return t.body.innerHTML;
-        }
-        
-        function showLoading(e) {
-            loadingDiv.style.display = e ? 'block' : 'none';
-        }
-        
-        function showError(e) {
-            errorDiv.textContent = e;
-            setTimeout(() => {
-                errorDiv.textContent = '';
-            }, 5e3);
-        }
-        
-        function debounce(e, t) {
-            let r;
-            return function (...n) {
-                clearTimeout(r);
-                r = setTimeout(() => e.apply(this, n), t);
-            }
-        }
-        
         function handlePlayerClick(index) {
             if (index >= 0 && index < players.length) {
+                searchInput.value = players[index].name;
                 showWikipediaPageStats(players[index].url);
+                clearResults();
+            }
+        }
+        
+        function highlightTopResult(suggestion) {
+            const userInput = searchInput.value;
+            if (suggestion.toLowerCase().startsWith(userInput.toLowerCase())) {
+                searchInput.value = userInput + suggestion.slice(userInput.length);
+                searchInput.setSelectionRange(userInput.length, suggestion.length);
+            }
+        }
+        
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+            players = [];
+            selectedPlayerIndex = -1;
+        }
+        
+        function handleKeyDown(event) {
+            if (players.length === 0) return;
+        
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                selectedPlayerIndex = (selectedPlayerIndex + 1) % players.length;
+                updateHighlight();
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                selectedPlayerIndex = (selectedPlayerIndex - 1 + players.length) % players.length;
+                updateHighlight();
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (selectedPlayerIndex !== -1) {
+                    handlePlayerClick(selectedPlayerIndex);
+                } else {
+                    searchPlayers();
+                }
+            }
+        }
+        
+        function updateHighlight() {
+            if (selectedPlayerIndex !== -1) {
+                highlightTopResult(players[selectedPlayerIndex].name);
+                const playerElements = resultsDiv.querySelectorAll('.player');
+                playerElements.forEach((el, index) => {
+                    el.classList.toggle('selected', index === selectedPlayerIndex);
+                });
             }
         }
         
         // Event listeners
-        searchInput.addEventListener('input', debounce(searchPlayers(), 300));
-        searchInput.addEventListener('keypress', function (event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                searchPlayers(true);
-            }
-        });
-        
+        searchInput.addEventListener('input', debounce(searchPlayers, 300));
+        searchInput.addEventListener('keydown', handleKeyDown);
         searchButton.addEventListener('click', searchPlayers);
     </script>
 </body>
