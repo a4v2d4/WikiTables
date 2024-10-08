@@ -20,7 +20,6 @@
             margin: 0 auto;
             padding: 20px;
             color: var(--text-color);
-            /* Lighter background than Wikipedia */
             background-color: #f0f0e1;
         }
 
@@ -190,37 +189,23 @@
 
         const infoCardResultDiv = document.getElementById('infoTable');
         const tableResultsDiv = document.getElementById('tables');
-
-        async function fetchWikipediaPage(title) {
-            console.log("fetchWikipediaPage title:", title);
-
-            // Extract the page title from the URL if a full URL is provided
-            if (title.startsWith('https://en.wikipedia.org/wiki/')) {
-                title = title.split('/').pop();
+        
+        async function fetchWikipediaPage(e) {
+            if (e.startsWith('https://en.wikipedia.org/wiki/')) {
+                e = e.split('/').pop();
             }
-
-            // Encode the title for use in the URL
-            const encodedTitle = encodeURIComponent(title);
-
-            // Construct the Wikipedia API URL
-            const apiUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodedTitle}&format=json&origin=*`;
-
+            const t = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(e)}&format=json&origin=*`;
             try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                if (data.error) {
-                    throw new Error(`Wikipedia API error: ${data.error.info}`);
-                }
-                return data.parse.text['*'];
-            } catch (error) {
-                console.error('Error fetching Wikipedia page:', error.message);
-                throw error;
+                const e = await fetch(t);
+                if (!e.ok) throw new Error(`HTTP error! status: ${e.status}`);
+                const r = await e.json();
+                if (r.error) throw new Error(`Wikipedia API error: ${r.error.info}`);
+                return r.parse.text["*"];
+            } catch (e) {
+                throw e;
             }
         }
-
+        
         function removeEditSpans(element) {
             const editSpans = element.querySelectorAll('span');
             editSpans.forEach(span => {
@@ -229,200 +214,151 @@
                 }
             });
         }
-
+        
         function extractTablesAndDivs(htmlContent) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlContent, 'text/html');
-            console.log('Parsed document:', doc);
-
+        
             // Remove all elements with class "mw-empty-elt"
             doc.querySelectorAll('.mw-empty-elt').forEach(el => el.remove());
-
+        
             // Find the info card table
             const infocardTables = Array.from(doc.querySelectorAll('.infobox.vcard'));
             const infocardTable = infocardTables[0];
-            console.log('Found infocard table:', infocardTable);
-
+        
             const result = [];
             if (infocardTable) {
                 result.push(infocardTable.outerHTML);
             }
-
+        
             const tables = Array.from(doc.querySelectorAll('.wikitable'));
-            console.log('Found tables:', tables);
-
+        
             tables.forEach(table => {
                 let currentNode = table.previousElementSibling;
                 const precedingDivs = [];
-
+        
                 while (currentNode && currentNode.tagName.toLowerCase() === 'div') {
-                    removeEditSpans(currentNode)
-                    precedingDivs.unshift(currentNode.outerHTML); // Add to the beginning of the array
+                    removeEditSpans(currentNode);
+                    precedingDivs.unshift(currentNode.outerHTML);
                     currentNode = currentNode.previousElementSibling;
                 }
-
+        
                 // Add the preceding divs to the result array
                 result.push(...precedingDivs);
-
+        
                 // Add the table to the result array
                 result.push(table.outerHTML);
             });
-
-            console.log('Result array:', result);
+        
             return result;
         }
-
+        
         async function scrapeSportsStatistics(url) {
-            console.log('Entering scrapeSportsStatistics function');
-            console.log('URL:', url);
-
             try {
-                console.log('Showing loading indicator');
                 showLoading(true);
-
-                console.log('Fetching Wikipedia page');
                 const htmlContent = await fetchWikipediaPage(url);
-                console.log('Wikipedia page fetched, content length:', htmlContent.length);
-
-                console.log('Extracting college statistics');
                 let tables = extractTablesAndDivs(htmlContent);
-
-                if (!tables.length === 0) {
-                    console.log('No tables found');
+        
+                if (tables.length === 0) {
                     throw new Error('No tables found on this page');
                 }
-
-                console.log('Returning scraped data');
+        
                 return tables;
             } catch (error) {
-                console.error('Error in scrapeSportsStatistics:', error.message);
                 showError(error.message);
                 return null;
             } finally {
-                console.log('Hiding loading indicator');
                 showLoading(false);
             }
         }
-
+        
         async function searchPlayers() {
-            const searchText = searchInput.value.trim();
-            if (!searchText) {
-                showError('Please enter a player name');
-                return;
-            }
-
-            const urlString = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(searchText)}&limit=10&namespace=0&format=json&origin=*`;
-
+            const e = searchInput.value.trim();
+            if (!e) return void showError('Please enter a player name');
+            const t = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(e)}&limit=10&namespace=0&format=json&origin=*`;
             try {
                 showLoading(true);
-                const response = await fetch(urlString);
-                const jsonArray = await response.json();
-
-                if (Array.isArray(jsonArray) && jsonArray.length > 3) {
-                    const names = jsonArray[1];
-                    const urls = jsonArray[3];
-                    if (Array.isArray(names) && Array.isArray(urls) && names.length === urls.length) {
-                        players = names.map((name, index) => ({ name, url: urls[index] }));
-                        displayResults();
-                    } else {
-                        throw new Error('Invalid response format');
+                const e = await fetch(t);
+                const r = await e.json();
+                if (Array.isArray(r) && r.length > 3) {
+                    const e = r[1], t = r[3];
+                    if (Array.isArray(e) && Array.isArray(t) && e.length === t.length) {
+                        players = e.map((e, r) => ({ name: e, url: t[r] }));
+                        return void displayResults();
                     }
-                } else {
-                    throw new Error('No results found');
+                    throw new Error('Invalid response format');
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                showError(error.message);
+                throw new Error('No results found');
+            } catch (e) {
+                showError(e.message);
             } finally {
                 showLoading(false);
             }
         }
-
+        
         function displayResults() {
-            resultsDiv.innerHTML = players.map(player => `
-                <div class="player" onclick="showWikipediaPageStats('${player.url}')" role="listitem">
-                    <h2>${player.name}</h2>
+            resultsDiv.innerHTML = players.map(e => `
+                <div class="player" onclick="showWikipediaPageStats('${e.url}')" role="listitem">
+                    <h2>${e.name}</h2>
                 </div>
             `).join('');
         }
-
+        
         function clearSearchScreen() {
             resultsDiv.innerHTML = '';
         }
-
-        async function showWikipediaPageStats(url) {
-            console.log('Entering showWikipediaPageStats function');
-            console.log('URL:', url);
-
+        
+        async function showWikipediaPageStats(e) {
             try {
-                console.log('Showing loading indicator');
                 showLoading(true);
-
-                console.log('Calling scrapeSportsStatistics');
-                const tables = await scrapeSportsStatistics(url);
-                console.log('Received tables:', tables);
-
-                if (tables) {
-                    console.log('Stats found, updating statsResultDiv');
-                    infoCardResultDiv.innerHTML = modifyLinks(tables[0]);
-                    tableResultsDiv.innerHTML = modifyLinks(tables.slice(1).join(''));
+                const t = await scrapeSportsStatistics(e);
+                if (t) {
+                    infoCardResultDiv.innerHTML = modifyLinks(t[0]);
+                    tableResultsDiv.innerHTML = modifyLinks(t.slice(1).join(''));
                     clearSearchScreen();
-                    console.log('statsResultDiv updated');
-                } else {
-                    console.log('No stats found');
                 }
-            } catch (error) {
-                console.error('Error in showWikipediaPageStats:', error);
-                showError(error.message);
+            } catch (e) {
+                showError(e.message);
             } finally {
-                console.log('Hiding loading indicator');
                 showLoading(false);
             }
-
-            console.log('Exiting showWikipediaPageStats function');
         }
-
-        function modifyLinks(htmlContent) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlContent, 'text/html');
-
-            const links = doc.querySelectorAll('a');
-            links.forEach(link => {
-                const href = link.getAttribute('href');
-                if (href && href.startsWith('/wiki/')) {
-                    link.setAttribute('href', `https://en.wikipedia.org${href}`);
-                    link.setAttribute('target', '_blank');
+        
+        function modifyLinks(e) {
+            const t = (new DOMParser).parseFromString(e, 'text/html');
+            t.querySelectorAll('a').forEach(e => {
+                const t = e.getAttribute('href');
+                if (t && t.startsWith('/wiki/')) {
+                    e.setAttribute('href', `https://en.wikipedia.org${t}`);
+                    e.setAttribute('target', '_blank');
                 }
             });
-
-            return doc.body.innerHTML;
+            return t.body.innerHTML;
         }
-
-        function showLoading(isLoading) {
-            loadingDiv.style.display = isLoading ? 'block' : 'none';
+        
+        function showLoading(e) {
+            loadingDiv.style.display = e ? 'block' : 'none';
         }
-
-        function showError(message) {
-            errorDiv.textContent = message;
+        
+        function showError(e) {
+            errorDiv.textContent = e;
             setTimeout(() => {
                 errorDiv.textContent = '';
-            }, 5000);
+            }, 5e3);
         }
-
-        // Debounce function
-        function debounce(func, delay) {
-            let timeoutId;
-            return function (...args) {
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => func.apply(this, args), delay);
-            };
+        
+        function debounce(e, t) {
+            let r;
+            return function (...n) {
+                clearTimeout(r);
+                r = setTimeout(() => e.apply(this, n), t);
+            }
         }
-
-        // Add event listeners
+        
         searchInput.addEventListener('input', debounce(searchPlayers, 300));
-        searchInput.addEventListener('keypress', function (event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
+        searchInput.addEventListener('keypress', function (e) {
+            if ('Enter' === e.key) {
+                e.preventDefault();
                 searchButton.click();
             }
         });
