@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WikiTables</title>
+    <link rel="icon" href="https://en.wikipedia.org/static/favicon/wikipedia.ico" type="image/x-icon">
     <style>
         :root {
             --primary-color: #4a90e2;
@@ -18,9 +19,9 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f0f0e1;
-            /* Lighter background than Wikipedia */
             color: var(--text-color);
+            /* Lighter background than Wikipedia */
+            background-color: #f0f0e1;
         }
 
         input,
@@ -86,14 +87,74 @@
             margin-top: 10px;
         }
 
-        @media (max-width: 600px) {
+        #content-wrapper {
+            display: flex;
+            width: 100%;
+            gap: 20px;
+        }
+
+        #infoTable {
+            flex: 1;
+            max-width: calc(50% - 10px);
+        }
+
+        #tables {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+        }
+
+        /* Add styles for links */
+        a {
+            color: #0645ad;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 767px) {
             body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                max-width: 100%;
                 padding: 10px;
+                -webkit-text-size-adjust: 100%;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin-bottom: 15px;
             }
 
             input,
             button {
                 width: 100%;
+                box-sizing: border-box;
+                -webkit-appearance: none;
+                border-radius: 0;
+            }
+
+            #content-wrapper {
+                flex-direction: column;
+            }
+
+            #infoTable,
+            #tables {
+                flex: none;
+                max-width: 100%;
+                width: 100%;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th,
+            td {
+                padding: 5px;
             }
         }
     </style>
@@ -109,11 +170,11 @@
         <div id="results" role="list"></div>
     </div>
 
-    <div style="display: flex; width: 100%; height: 100%; gap: 20px;">
-        <div id="infoTable" style="flex: 1; max-width: calc(50% - 10px); height: 100%;">
+    <div id="content-wrapper">
+        <div id="infoTable">
             <!-- Content for infocard div -->
         </div>
-        <div id="tables" style="flex: 1; display: flex; flex-wrap: wrap; align-content: flex-start;">
+        <div id="tables">
             <!-- Content for rest of the tables div -->
         </div>
     </div>
@@ -129,7 +190,6 @@
 
         const infoCardResultDiv = document.getElementById('infoTable');
         const tableResultsDiv = document.getElementById('tables');
-
 
         async function fetchWikipediaPage(title) {
             console.log("fetchWikipediaPage title:", title);
@@ -175,17 +235,21 @@
             const doc = parser.parseFromString(htmlContent, 'text/html');
             console.log('Parsed document:', doc);
 
+            // Remove all elements with class "mw-empty-elt"
+            doc.querySelectorAll('.mw-empty-elt').forEach(el => el.remove());
+
             // Find the info card table
             const infocardTables = Array.from(doc.querySelectorAll('.infobox.vcard'));
             const infocardTable = infocardTables[0];
             console.log('Found infocard table:', infocardTable);
 
             const result = [];
-            result.push(infocardTable.outerHTML);
+            if (infocardTable) {
+                result.push(infocardTable.outerHTML);
+            }
 
             const tables = Array.from(doc.querySelectorAll('.wikitable'));
             console.log('Found tables:', tables);
-
 
             tables.forEach(table => {
                 let currentNode = table.previousElementSibling;
@@ -300,8 +364,8 @@
 
                 if (tables) {
                     console.log('Stats found, updating statsResultDiv');
-                    infoCardResultDiv.innerHTML = `${tables[0]}`;
-                    tableResultsDiv.innerHTML = `${tables.slice(1).join('')}`;
+                    infoCardResultDiv.innerHTML = modifyLinks(tables[0]);
+                    tableResultsDiv.innerHTML = modifyLinks(tables.slice(1).join(''));
                     clearSearchScreen();
                     console.log('statsResultDiv updated');
                 } else {
@@ -316,6 +380,22 @@
             }
 
             console.log('Exiting showWikipediaPageStats function');
+        }
+
+        function modifyLinks(htmlContent) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+
+            const links = doc.querySelectorAll('a');
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('/wiki/')) {
+                    link.setAttribute('href', `https://en.wikipedia.org${href}`);
+                    link.setAttribute('target', '_blank');
+                }
+            });
+
+            return doc.body.innerHTML;
         }
 
         function showLoading(isLoading) {

@@ -7,6 +7,7 @@
 - deploy [ ]
 
 ## DONE
+- iPhone rendering [X]
 - fix for NBA (NBA doesnt have college stats section) [X]
 - add info card table [X]
 - add draft measurements tables [X]
