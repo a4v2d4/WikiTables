@@ -7,9 +7,9 @@
 
 ### UI colors
 - make autocomplete top match show in search bar highlighted like google [ ]
-- make dark mode [ ]
 
 ## DONE
+- make dark mode [X]
 - make top match auto highlighted [X]
 - make autocomplete work on enter [X]
 - deploy [X]
