@@ -272,34 +272,48 @@
             }
         }
         
-        async function searchPlayers() {
-            const e = searchInput.value.trim();
-            if (!e) return void showError('Please enter a player name');
-            const t = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(e)}&limit=10&namespace=0&format=json&origin=*`;
+        async function searchPlayers(do_launch=false) {
+            const searchText = searchInput.value.trim();
+            if (!searchText) {
+                showError('Please enter a player name');
+                return;
+            }
+        
+            const urlString = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(searchText)}&limit=10&namespace=0&format=json&origin=*`;
+        
             try {
                 showLoading(true);
-                const e = await fetch(t);
-                const r = await e.json();
-                if (Array.isArray(r) && r.length > 3) {
-                    const e = r[1], t = r[3];
-                    if (Array.isArray(e) && Array.isArray(t) && e.length === t.length) {
-                        players = e.map((e, r) => ({ name: e, url: t[r] }));
-                        return void displayResults();
+                const response = await fetch(urlString);
+                const jsonArray = await response.json();
+        
+                if (Array.isArray(jsonArray) && jsonArray.length > 3) {
+                    const names = jsonArray[1];
+                    const urls = jsonArray[3];
+                    if (Array.isArray(names) && Array.isArray(urls) && names.length === urls.length) {
+                        players = names.map((name, index) => ({ name, url: urls[index] }));
+                        displayResults();
+                        // Automatically "click" on the top result
+                        if (players.length > 0 && do_launch == true) {
+                            showWikipediaPageStats(players[0].url);
+                        }
+                    } else {
+                        throw new Error('Invalid response format');
                     }
-                    throw new Error('Invalid response format');
+                } else {
+                    throw new Error('No results found');
                 }
-                throw new Error('No results found');
-            } catch (e) {
-                showError(e.message);
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message);
             } finally {
                 showLoading(false);
             }
         }
         
         function displayResults() {
-            resultsDiv.innerHTML = players.map(e => `
-                <div class="player" onclick="showWikipediaPageStats('${e.url}')" role="listitem">
-                    <h2>${e.name}</h2>
+            resultsDiv.innerHTML = players.map((player, index) => `
+                <div class="player" onclick="handlePlayerClick(${index})" role="listitem">
+                    <h2>${player.name}</h2>
                 </div>
             `).join('');
         }
@@ -355,13 +369,22 @@
             }
         }
         
-        searchInput.addEventListener('input', debounce(searchPlayers, 300));
-        searchInput.addEventListener('keypress', function (e) {
-            if ('Enter' === e.key) {
-                e.preventDefault();
-                searchButton.click();
+        function handlePlayerClick(index) {
+            if (index >= 0 && index < players.length) {
+                showWikipediaPageStats(players[index].url);
+            }
+        }
+        
+        // Event listeners
+        searchInput.addEventListener('input', debounce(searchPlayers(), 300));
+        searchInput.addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                searchPlayers(true);
             }
         });
+        
+        searchButton.addEventListener('click', searchPlayers);
     </script>
 </body>
 
