@@ -15,7 +15,7 @@
 
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f0f0e1; /* Lighter background than Wikipedia */
@@ -349,8 +349,6 @@
 
         function clearSearchScreen() {
             resultsDiv.innerHTML = '';
-            searchInput.textContent = '';
-            searchPageDiv.setAttribute('visible', 0);
         }
 
         async function showWikipediaPageStats(url) {
