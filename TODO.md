@@ -1,4 +1,9 @@
 ## TODO
+
+### docs
+- add example screenshots to readme [ ]
+- check if i need to do anything to credit Wikipedia []
+
 ### performance
 - cache results [ ]
   
