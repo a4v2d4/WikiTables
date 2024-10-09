@@ -44,8 +44,7 @@
             background-color: #3a7bc8;
         }
 
-        #results,
-        #statsResult {
+        #results {
             margin-top: 20px;
         }
 
@@ -326,7 +325,7 @@
             return result;
         }
 
-        async function scrapeSportsStatistics(url) {
+        async function scrapeTables(url) {
             try {
                 showLoading(true);
                 const htmlContent = await fetchWikipediaPage(url);
@@ -349,10 +348,10 @@
             resultsDiv.innerHTML = '';
         }
 
-        async function showWikipediaPageStats(e) {
+        async function showWikipediaPageTables(e) {
             try {
                 showLoading(true);
-                const t = await scrapeSportsStatistics(e);
+                const t = await scrapeTables(e);
                 if (t) {
                     infoCardResultDiv.innerHTML = modifyLinks(t[0]);
                     tableResultsDiv.innerHTML = modifyLinks(t.slice(1).join(''));
@@ -445,7 +444,7 @@
         function handlePlayerClick(index) {
             if (index >= 0 && index < players.length) {
                 searchInput.value = players[index].name;
-                showWikipediaPageStats(players[index].url);
+                showWikipediaPageTables(players[index].url);
                 clearResults();
             }
         }
