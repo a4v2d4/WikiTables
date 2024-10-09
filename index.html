@@ -48,7 +48,7 @@
             margin-top: 20px;
         }
 
-        .player {
+        .wikipediaPage {
             border: 1px solid var(--border-color);
             padding: 10px;
             margin-bottom: 10px;
@@ -56,7 +56,7 @@
             transition: background-color 0.3s;
         }
 
-        .player:hover {
+        .wikipediaPage:hover {
             background-color: var(--secondary-color);
         }
 
@@ -115,7 +115,7 @@
             text-decoration: underline;
         }
 
-        .player.selected {
+        .wikipediaPage.selected {
             background-color: #e0e0e0;
         }
 
@@ -205,13 +205,13 @@
             color: var(--text-color);
         }
 
-        .dark-mode .player {
+        .dark-mode .wikipediaPage {
             background-color: var(--secondary-color);
             border-color: var(--border-color);
         }
 
-        .dark-mode .player:hover,
-        .dark-mode .player.selected {
+        .dark-mode .wikipediaPage:hover,
+        .dark-mode .wikipediaPage.selected {
             background-color: #3a3a3a;
         }
 
@@ -251,7 +251,7 @@
 
     <script>
         let pages = [];
-        let selectedPlayerIndex = -1;
+        let selectedPageTitleIndex = -1;
 
         const searchPageDiv = document.getElementById('landing_page_div');
         const searchInput = document.getElementById('searchInput');
@@ -399,7 +399,7 @@
         async function searchWikipediaPages() {
             const searchText = searchInput.value.trim();
             if (!searchText) {
-                showError('Please enter a player name');
+                showError('Please enter a wikipedia title to search for');
                 return;
             }
 
@@ -414,11 +414,11 @@
                     const pageTitles = jsonArray[1];
                     const urls = jsonArray[3];
                     if (Array.isArray(pageTitles) && Array.isArray(urls) && pageTitles.length === urls.length) {
-                        pages = pageTitles.map((name, index) => ({ name, url: urls[index] }));
+                        pages = pageTitles.map((pageTitle, index) => ({ pageTitle, url: urls[index] }));
                         displayResults();
                         if (pages.length > 0) {
-                            highlightTopResult(pages[0].name);
-                            selectedPlayerIndex = 0;
+                            highlightTopResult(pages[0].pageTitle);
+                            selectedPageTitleIndex = 0;
                         }
                     } else {
                         throw new Error('Invalid response format');
@@ -435,16 +435,16 @@
         }
 
         function displayResults() {
-            resultsDiv.innerHTML = pages.map((player, index) => `
-                <div class="player" onclick="handlePlayerClick(${index})" role="listitem">
-                    <h2>${player.name}</h2>
+            resultsDiv.innerHTML = pages.map((wikipediaPage, index) => `
+                <div class="wikipediaPage" onclick="handlePageTitleClick(${index})" role="listitem">
+                    <h2>${wikipediaPage.pageTitle}</h2>
                 </div>
             `).join('');
         }
 
-        function handlePlayerClick(index) {
+        function handlePageTitleClick(index) {
             if (index >= 0 && index < pages.length) {
-                searchInput.value = pages[index].name;
+                searchInput.value = pages[index].pageTitle;
                 showWikipediaPageTables(pages[index].url);
                 clearResults();
             }
@@ -461,7 +461,7 @@
         function clearResults() {
             resultsDiv.innerHTML = '';
             pages = [];
-            selectedPlayerIndex = -1;
+            selectedPageTitleIndex = -1;
         }
 
         function handleKeyDown(event) {
@@ -469,16 +469,16 @@
 
             if (event.key === 'ArrowDown') {
                 event.preventDefault();
-                selectedPlayerIndex = (selectedPlayerIndex + 1) % pages.length;
+                selectedPageTitleIndex = (selectedPageTitleIndex + 1) % pages.length;
                 updateHighlight();
             } else if (event.key === 'ArrowUp') {
                 event.preventDefault();
-                selectedPlayerIndex = (selectedPlayerIndex - 1 + pages.length) % pages.length;
+                selectedPageTitleIndex = (selectedPageTitleIndex - 1 + pages.length) % pages.length;
                 updateHighlight();
             } else if (event.key === 'Enter') {
                 event.preventDefault();
-                if (selectedPlayerIndex !== -1) {
-                    handlePlayerClick(selectedPlayerIndex);
+                if (selectedPageTitleIndex !== -1) {
+                    handlePageTitleClick(selectedPageTitleIndex);
                 } else {
                     searchWikipediaPages();
                 }
@@ -486,11 +486,11 @@
         }
 
         function updateHighlight() {
-            if (selectedPlayerIndex !== -1) {
-                highlightTopResult(pages[selectedPlayerIndex].name);
-                const playerElements = resultsDiv.querySelectorAll('.player');
-                playerElements.forEach((el, index) => {
-                    el.classList.toggle('selected', index === selectedPlayerIndex);
+            if (selectedPageTitleIndex !== -1) {
+                highlightTopResult(pages[selectedPageTitleIndex].pageTitle);
+                const wikipediaPageElements = resultsDiv.querySelectorAll('.pageTitle');
+                pageTitleElements.forEach((el, index) => {
+                    el.classList.toggle('selected', index === selectedPageTitleIndex);
                 });
             }
         }
@@ -534,7 +534,7 @@
         // Function to update dark mode styles for dynamically added content
         function updateDarkModeStyles() {
             const isDarkMode = document.body.classList.contains('dark-mode');
-            document.querySelectorAll('.player, button, th, a').forEach(element => {
+            document.querySelectorAll('.pageTitle, button, th, a').forEach(element => {
                 element.style.transition = 'background-color 0.3s, color 0.3s';
             });
         }
