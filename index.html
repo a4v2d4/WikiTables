@@ -232,9 +232,9 @@
             <label for="darkModeToggle" class="dark-mode-label">Dark Mode</label>
         </div>
         <h1>WikiTables</h1>
-        <input type="text" id="searchInput" placeholder="Enter player name" aria-label="Search for a player">
+        <input type="text" id="searchInput" placeholder="Search Wikipedia" aria-label="Search for a player">
         <button id="clearButton" onclick="clearSearchInput()" style="display: none;">&times;</button>
-        <button id="searchButton" onclick="searchPlayers()">Search</button>
+        <button id="searchButton" onclick="searchWikipediaPages()">Search</button>
         <div id="loading" class="loading" aria-live="polite">Loading...</div>
         <div id="error" class="error" aria-live="assertive"></div>
         <div id="results" role="list"></div>
@@ -250,7 +250,7 @@
     </div>
 
     <script>
-        let players = [];
+        let pages = [];
         let selectedPlayerIndex = -1;
 
         const searchPageDiv = document.getElementById('landing_page_div');
@@ -396,14 +396,14 @@
             }
         }
 
-        async function searchPlayers() {
+        async function searchWikipediaPages() {
             const searchText = searchInput.value.trim();
             if (!searchText) {
                 showError('Please enter a player name');
                 return;
             }
 
-            const urlString = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(searchText)}&limit=10&namespace=0&format=json&origin=*`;
+            const urlString = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(searchText)}&limit=10&pageTitlespace=0&format=json&origin=*`;
 
             try {
                 showLoading(true);
@@ -411,13 +411,13 @@
                 const jsonArray = await response.json();
 
                 if (Array.isArray(jsonArray) && jsonArray.length > 3) {
-                    const names = jsonArray[1];
+                    const pageTitles = jsonArray[1];
                     const urls = jsonArray[3];
-                    if (Array.isArray(names) && Array.isArray(urls) && names.length === urls.length) {
-                        players = names.map((name, index) => ({ name, url: urls[index] }));
+                    if (Array.isArray(pageTitles) && Array.isArray(urls) && pageTitles.length === urls.length) {
+                        pages = pageTitles.map((name, index) => ({ name, url: urls[index] }));
                         displayResults();
-                        if (players.length > 0) {
-                            highlightTopResult(players[0].name);
+                        if (pages.length > 0) {
+                            highlightTopResult(pages[0].name);
                             selectedPlayerIndex = 0;
                         }
                     } else {
@@ -435,7 +435,7 @@
         }
 
         function displayResults() {
-            resultsDiv.innerHTML = players.map((player, index) => `
+            resultsDiv.innerHTML = pages.map((player, index) => `
                 <div class="player" onclick="handlePlayerClick(${index})" role="listitem">
                     <h2>${player.name}</h2>
                 </div>
@@ -443,9 +443,9 @@
         }
 
         function handlePlayerClick(index) {
-            if (index >= 0 && index < players.length) {
-                searchInput.value = players[index].name;
-                showWikipediaPageTables(players[index].url);
+            if (index >= 0 && index < pages.length) {
+                searchInput.value = pages[index].name;
+                showWikipediaPageTables(pages[index].url);
                 clearResults();
             }
         }
@@ -460,34 +460,34 @@
 
         function clearResults() {
             resultsDiv.innerHTML = '';
-            players = [];
+            pages = [];
             selectedPlayerIndex = -1;
         }
 
         function handleKeyDown(event) {
-            if (players.length === 0) return;
+            if (pages.length === 0) return;
 
             if (event.key === 'ArrowDown') {
                 event.preventDefault();
-                selectedPlayerIndex = (selectedPlayerIndex + 1) % players.length;
+                selectedPlayerIndex = (selectedPlayerIndex + 1) % pages.length;
                 updateHighlight();
             } else if (event.key === 'ArrowUp') {
                 event.preventDefault();
-                selectedPlayerIndex = (selectedPlayerIndex - 1 + players.length) % players.length;
+                selectedPlayerIndex = (selectedPlayerIndex - 1 + pages.length) % pages.length;
                 updateHighlight();
             } else if (event.key === 'Enter') {
                 event.preventDefault();
                 if (selectedPlayerIndex !== -1) {
                     handlePlayerClick(selectedPlayerIndex);
                 } else {
-                    searchPlayers();
+                    searchWikipediaPages();
                 }
             }
         }
 
         function updateHighlight() {
             if (selectedPlayerIndex !== -1) {
-                highlightTopResult(players[selectedPlayerIndex].name);
+                highlightTopResult(pages[selectedPlayerIndex].name);
                 const playerElements = resultsDiv.querySelectorAll('.player');
                 playerElements.forEach((el, index) => {
                     el.classList.toggle('selected', index === selectedPlayerIndex);
@@ -507,9 +507,9 @@
             document.getElementById('clearButton').style.display = searchInput.value ? 'inline' : 'none'; // Show/hide clear button
         });
 
-        searchInput.addEventListener('input', debounce(searchPlayers, 300));
+        searchInput.addEventListener('input', debounce(searchWikipediaPages, 300));
         searchInput.addEventListener('keydown', handleKeyDown);
-        searchButton.addEventListener('click', searchPlayers);
+        searchButton.addEventListener('click', searchWikipediaPages);
     </script>
     <script>
         // Dark mode toggle functionality
