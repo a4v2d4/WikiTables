@@ -1,4 +1,9 @@
 # WikiTables
-View just the tables from any Wikipedia page without all the extra fluff.
+View just the tables from any Wikipedia page.
 
-Motivation was for easy access to sports stats tables for professional athletes
+### Why?
+Motivation was to easily access career stats for NFL and NBA players.
+
+### Example
+Patrick Mahomes
+![Patrick Mahomes WikiTables Page](Example.png)
