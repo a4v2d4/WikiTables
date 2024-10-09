@@ -233,6 +233,7 @@
         </div>
         <h1>WikiTables</h1>
         <input type="text" id="searchInput" placeholder="Enter player name" aria-label="Search for a player">
+        <button id="clearButton" onclick="clearSearchInput()" style="display: none;">&times;</button>
         <button id="searchButton" onclick="searchPlayers()">Search</button>
         <div id="loading" class="loading" aria-live="polite">Loading...</div>
         <div id="error" class="error" aria-live="assertive"></div>
@@ -494,7 +495,18 @@
             }
         }
 
+        function clearSearchInput() {
+            searchInput.value = '';
+            clearResults();
+            document.getElementById('clearButton').style.display = 'none'; // Hide the clear button
+            searchInput.focus(); // Set focus back to the search input
+        }
+
         // Event listeners
+        searchInput.addEventListener('input', () => {
+            document.getElementById('clearButton').style.display = searchInput.value ? 'inline' : 'none'; // Show/hide clear button
+        });
+
         searchInput.addEventListener('input', debounce(searchPlayers, 300));
         searchInput.addEventListener('keydown', handleKeyDown);
         searchButton.addEventListener('click', searchPlayers);

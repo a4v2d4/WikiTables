@@ -2,10 +2,11 @@
 ### performance
 - cache results [ ]
   
-### UI colors
+### UI
 - make autocomplete top match show in search bar highlighted like google [ ]
 
 ## DONE
+- make 'clear search' button show in input box on iOS and put focus back in input on clearing [X]
 - rename all things statistics to just generalized tables [X]
 - make dark mode [X]
 - make top match auto highlighted [X]
