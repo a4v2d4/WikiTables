@@ -530,13 +530,13 @@
         }
 
         function handleKeyDown(event) {
-            if (pages.length === 0) return;
-
             if (event.key === 'ArrowDown') {
+                if (pages.length === 0) return;
                 event.preventDefault();
                 selectedPageTitleIndex = (selectedPageTitleIndex + 1) % pages.length;
                 updateHighlight();
             } else if (event.key === 'ArrowUp') {
+                if (pages.length === 0) return;
                 event.preventDefault();
                 selectedPageTitleIndex = (selectedPageTitleIndex - 1 + pages.length) % pages.length;
                 updateHighlight();
