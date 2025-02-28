@@ -160,6 +160,29 @@
             td {
                 padding: 5px;
             }
+
+            .title-logo {
+                height: 30px;
+                width: 30px;
+            }
+        }
+
+        .title-link {
+            color: inherit;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title-logo {
+            height: 40px;
+            width: 40px;
+            object-fit: contain;
+        }
+
+        .title-link:hover {
+            text-decoration: none;
         }
     </style>
     <style>
@@ -222,6 +245,14 @@
         .dark-mode a {
             color: var(--primary-color);
         }
+
+        .dark-mode .title-link {
+            color: inherit;
+        }
+
+        .dark-mode .title-logo {
+            filter: invert(0.8);
+        }
     </style>
 </head>
 
@@ -231,7 +262,12 @@
             <input type="checkbox" id="darkModeToggle" class="dark-mode-input">
             <label for="darkModeToggle" class="dark-mode-label">Dark Mode</label>
         </div>
-        <h1>WikiTables</h1>
+        <h1>
+            <a href="https://wikitables.com" class="title-link">
+                <img src="https://en.wikipedia.org/static/favicon/wikipedia.ico" class="title-logo" alt="Wikipedia Logo">
+                WikiTables
+            </a>
+        </h1>
         <input type="text" id="searchInput" placeholder="Search Wikipedia" aria-label="Search for a Wikipedia page">
         <button id="clearButton" onclick="clearSearchInput()" style="display: none;">&times;</button>
         <button id="searchButton" onclick="searchWikipediaPages()">Search</button>
@@ -387,10 +423,16 @@
         }
 
         function showError(e) {
-            errorDiv.textContent = e;
+            const searchQuery = encodeURIComponent(searchInput.value.trim());
+            errorDiv.innerHTML = `
+                ${e}<br>
+                ${searchQuery ? `<a href="https://en.wikipedia.org/wiki/Special:Search?search=${searchQuery}" target="_blank" style="color: var(--primary-color); margin-top: 5px; display: inline-block;">
+                    Search on Wikipedia
+                </a>` : ''}
+            `;
             setTimeout(() => {
                 errorDiv.textContent = '';
-            }, 5e3);
+            }, 5000);
         }
 
         function debounce(e, t) {
