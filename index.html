@@ -202,8 +202,7 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            display: flex;
-            align-items: center;
+            z-index: 1000;
         }
 
         .dark-mode-input {
@@ -215,12 +214,26 @@
             padding: 10px;
             background-color: var(--secondary-color);
             color: var(--text-color);
-            border-radius: 20px;
-            transition: background-color 0.3s, color 0.3s;
+            border-radius: 50%;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
         }
 
-        .dark-mode-input:checked+.dark-mode-label {
-            background-color: var(--primary-color);
+        .dark-mode-label span {
+            display: none;
+            font-size: 1em;
+        }
+
+        .dark-mode-input:checked + .dark-mode-label .sun {
+            display: block;
+        }
+
+        .dark-mode-input:not(:checked) + .dark-mode-label .moon {
+            display: block;
         }
 
         /* Additional dark mode adjustments */
@@ -254,6 +267,13 @@
         .dark-mode .title-logo {
             filter: none;
         }
+
+        .dark-mode-label svg {
+            display: block;
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
     </style>
 </head>
 
@@ -261,7 +281,18 @@
     <div id="landing_page_div">
         <div class="dark-mode-toggle">
             <input type="checkbox" id="darkModeToggle" class="dark-mode-input">
-            <label for="darkModeToggle" class="dark-mode-label">Dark Mode</label>
+            <label for="darkModeToggle" class="dark-mode-label">
+                <span class="moon">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path fill="currentColor" d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1-8.313-12.454z"/>
+                    </svg>
+                </span>
+                <span class="sun">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-10.6a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
+                    </svg>
+                </span>
+            </label>
         </div>
         <h1>
             <a href="https://wikitables.com" class="title-link">
