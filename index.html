@@ -304,18 +304,18 @@
             if (e.startsWith('https://en.wikipedia.org/wiki/')) {
                 e = e.split('/').pop();
             }
-            // Decode URI component first to handle special characters properly
             const decodedTitle = decodeURIComponent(e);
-            // Encode only the special characters that need encoding for Wikipedia URLs
             const encodedTitle = decodedTitle.replace(/ /g, '_')
                 .replace(/[^a-zA-Z0-9_\-\.]/g, encodeURIComponent);
-            const t = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodedTitle}&format=json&origin=*`;
+            const t = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodedTitle}&redirects&format=json&origin=*`;
             try {
                 const e = await fetch(t);
                 if (!e.ok) throw new Error(`HTTP error! status: ${e.status}`);
                 const r = await e.json();
                 if (r.error) throw new Error(`Wikipedia API error: ${r.error.info}`);
-                return r.parse.text["*"];
+                
+                const finalTitle = r.parse.title;
+                return { content: r.parse.text["*"], finalTitle };
             } catch (e) {
                 throw e;
             }
@@ -371,14 +371,14 @@
         async function scrapeTables(url) {
             try {
                 showLoading(true);
-                const htmlContent = await fetchWikipediaPage(url);
+                const { content: htmlContent, finalTitle } = await fetchWikipediaPage(url);
                 let tables = extractTablesAndDivs(htmlContent);
 
                 if (tables.length === 0) {
                     throw new Error('No tables found on this page');
                 }
 
-                return tables;
+                return { tables, finalTitle };
             } catch (error) {
                 showError(error.message);
                 return null;
@@ -396,9 +396,15 @@
                 showLoading(true);
                 const t = await scrapeTables(e);
                 if (t) {
-                    infoCardResultDiv.innerHTML = modifyLinks(t[0]);
-                    tableResultsDiv.innerHTML = modifyLinks(t.slice(1).join(''));
+                    infoCardResultDiv.innerHTML = modifyLinks(t.tables[0]);
+                    tableResultsDiv.innerHTML = modifyLinks(t.tables.slice(1).join(''));
                     clearSearchScreen();
+                    
+                    const urlEncodedTitle = encodeURIComponent(t.finalTitle.replace(/ /g, '_'));
+                    const url = new URL(window.location);
+                    url.searchParams.set('page', urlEncodedTitle);
+                    window.history.pushState({}, '', url);
+                    searchInput.value = t.finalTitle;
                 }
             } catch (e) {
                 showError(e.message);
@@ -578,8 +584,9 @@
             if (pageParam) {
                 const decodedTitle = decodeURIComponent(pageParam).replace(/_/g, ' ');
                 const wikipediaUrl = `https://en.wikipedia.org/wiki/${pageParam}`;
-                searchInput.value = decodedTitle;
-                showWikipediaPageTables(wikipediaUrl);
+                showWikipediaPageTables(wikipediaUrl).then(() => {
+                    // After resolving, the searchInput is updated in showWikipediaPageTables
+                });
             } else if (searchParam) {
                 searchInput.value = decodeURIComponent(searchParam);
                 searchWikipediaPages();
