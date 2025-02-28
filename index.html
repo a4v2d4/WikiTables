@@ -444,7 +444,10 @@
 
         function handlePageTitleClick(index) {
             if (index >= 0 && index < pages.length) {
-                searchInput.value = pages[index].pageTitle;
+                const pageTitle = pages[index].pageTitle;
+                const urlEncodedTitle = encodeURIComponent(pageTitle.replace(/ /g, '_'));
+                window.history.pushState({}, '', `?page=${urlEncodedTitle}`);
+                searchInput.value = pageTitle;
                 showWikipediaPageTables(pages[index].url);
                 clearResults();
             }
@@ -510,6 +513,17 @@
         searchInput.addEventListener('input', debounce(searchWikipediaPages, 300));
         searchInput.addEventListener('keydown', handleKeyDown);
         searchButton.addEventListener('click', searchWikipediaPages);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const pageParam = params.get('page');
+            if (pageParam) {
+                const decodedTitle = decodeURIComponent(pageParam).replace(/_/g, ' ');
+                const wikipediaUrl = `https://en.wikipedia.org/wiki/${pageParam}`;
+                searchInput.value = decodedTitle;
+                showWikipediaPageTables(wikipediaUrl);
+            }
+        });
     </script>
     <script>
         // Dark mode toggle functionality
