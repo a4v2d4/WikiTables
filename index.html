@@ -179,6 +179,7 @@
             height: 40px;
             width: 40px;
             object-fit: contain;
+            filter: invert(1);
         }
 
         .title-link:hover {
@@ -251,7 +252,7 @@
         }
 
         .dark-mode .title-logo {
-            filter: invert(0.8);
+            filter: none;
         }
     </style>
 </head>
@@ -588,6 +589,11 @@
     <script>
         // Dark mode toggle functionality
         const darkModeToggle = document.getElementById('darkModeToggle');
+
+        // Set dark mode as default
+        document.body.classList.add('dark-mode');
+        darkModeToggle.checked = true;
+        localStorage.setItem('darkMode', 'enabled');
 
         // Check for saved dark mode preference
         if (localStorage.getItem('darkMode') === 'enabled') {
