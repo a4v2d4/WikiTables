@@ -267,7 +267,12 @@
             if (e.startsWith('https://en.wikipedia.org/wiki/')) {
                 e = e.split('/').pop();
             }
-            const t = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(e)}&format=json&origin=*`;
+            // Decode URI component first to handle special characters properly
+            const decodedTitle = decodeURIComponent(e);
+            // Encode only the special characters that need encoding for Wikipedia URLs
+            const encodedTitle = decodedTitle.replace(/ /g, '_')
+                .replace(/[^a-zA-Z0-9_\-\.]/g, encodeURIComponent);
+            const t = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodedTitle}&format=json&origin=*`;
             try {
                 const e = await fetch(t);
                 if (!e.ok) throw new Error(`HTTP error! status: ${e.status}`);
